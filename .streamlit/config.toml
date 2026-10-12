@@ -1,0 +1,9 @@
+[server]
+# Local only by default. The Docker image overrides this with --server.address 0.0.0.0.
+address = "127.0.0.1"
+maxUploadSize = 15
+enableXsrfProtection = true
+enableCORS = true
+
+[browser]
+gatherUsageStats = false
