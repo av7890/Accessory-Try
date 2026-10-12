@@ -17,7 +17,7 @@ python -m venv .venv
 .venv/Scripts/streamlit run app.py                          # opens http://localhost:8501
 ```
 
-**Using the app:**
+**How to use the app:**
 1. Sidebar, "1. Accessory": choose *New image* (upload a product photo or paste a direct image URL) or
    *Catalogue* (a saved item).
 2. Check the extracted cut-out in the sidebar. Change the removal method or tolerance if the edges look wrong.
@@ -275,10 +275,7 @@ ids are restricted to lowercase letters, digits, `_` and `-`, and paths are chec
 
 **`download_models.main`:** for each model: download if missing → compare SHA-256 → delete the file on mismatch.
 
-## 7. Claims in plain language
-
-Only things we tested are listed.
-
+## 7. Claims:
 ### Accuracy of each part
 
 | Part | Result | How it was tested |
