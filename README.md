@@ -3,6 +3,8 @@
 A Streamlit app that places earrings, necklaces, rings and bracelets from a product photo onto a person in a
 photo or a live webcam. Course project for Image & Video Processing.
 
+Made by: Charvi Kathal, Gunjan Chaurasia
+
 ## 1. How to run
 
 **Windows, one click:** double-click `setup_and_run.bat`. On the first run it creates a virtual environment,
