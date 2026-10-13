@@ -4,7 +4,7 @@ import numpy as np
 
 
 def overlay(frame: np.ndarray, sprite: np.ndarray, anchor_frac, target_xy, up_vec, width_px: float,
-            opacity: float = 1.0, xscale: float = 1.0, shadow: float = 0.0) -> None:
+            opacity: float = 1.0, xscale: float = 1.0, shadow: float = 0.0):
     """Draw `sprite` (BGRA uint8) onto `frame` (BGR uint8) in place.
 
     anchor_frac : (fx, fy) point of the sprite (fractions of w,h) that lands on target_xy.
@@ -13,10 +13,11 @@ def overlay(frame: np.ndarray, sprite: np.ndarray, anchor_frac, target_xy, up_ve
     opacity     : 0..1 global alpha (used to fade accessories that turn out of view).
     xscale      : extra horizontal squash in sprite space (head-yaw foreshortening).
     shadow      : 0..1 strength of a soft contact shadow cast below/right of the sprite.
+    Returns the modified region (x0, y0, x1, y1), or None if nothing was drawn.
     """
     sh, sw = sprite.shape[:2]
     if width_px < 2 or opacity <= 0.01:
-        return
+        return None
     ux, uy = up_vec
     n = np.hypot(ux, uy)
     ux, uy = (0.0, -1.0) if n < 1e-6 else (ux / n, uy / n)
@@ -39,7 +40,7 @@ def overlay(frame: np.ndarray, sprite: np.ndarray, anchor_frac, target_xy, up_ve
     x1, y1 = np.ceil(pts.max(0)).astype(int) + pad
     x0, y0, x1, y1 = max(x0, 0), max(y0, 0), min(x1, W), min(y1, H)
     if x1 <= x0 or y1 <= y0:
-        return
+        return None
     M = np.hstack([R, (t - (x0, y0))[:, None]])
 
     a = sprite[..., 3:4].astype(np.float32) / 255.0 * opacity
@@ -55,3 +56,4 @@ def overlay(frame: np.ndarray, sprite: np.ndarray, anchor_frac, target_xy, up_ve
         sh_a = cv2.warpAffine(sh_a, shift, (sh_a.shape[1], sh_a.shape[0]))
         roi = roi * (1.0 - shadow * 0.45 * sh_a[..., None] * (1.0 - alpha))
     frame[y0:y1, x0:x1] = np.clip(warped[..., :3] + roi * (1.0 - alpha), 0, 255).astype(np.uint8)
+    return int(x0), int(y0), int(x1), int(y1)

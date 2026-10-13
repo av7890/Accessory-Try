@@ -29,10 +29,10 @@ def test_one_euro_follows_fast_motion_with_low_lag():
 
 def test_palm_detection_is_label_geometry_consistent():
     p = np.zeros((21, 2), np.float32)
-    p[5], p[17] = (-1, -2), (1, -2)                           # thumb side left
-    assert palm_facing(p, "Right") is True and palm_facing(p, "Left") is False
-    p[5], p[17] = (1, -2), (-1, -2)                           # mirrored geometry
+    p[5], p[17] = (-1, -2), (1, -2)                           # index finger on the image-left (cross > 0)
     assert palm_facing(p, "Right") is False and palm_facing(p, "Left") is True
+    p[5], p[17] = (1, -2), (-1, -2)                           # mirrored geometry (cross < 0)
+    assert palm_facing(p, "Right") is True and palm_facing(p, "Left") is False
 
 
 def test_yaw_sign_from_nose_position():
@@ -60,3 +60,24 @@ def test_engine_runs_on_blank_frame(acc, live):
         out, found = eng.render(frame, scene, spr, cfg)
     assert out.shape == frame.shape and found is False
     assert (out == frame).all()                                # nothing detected -> frame untouched
+
+
+@needs_models
+def test_live_segmentation_runs_in_background_and_never_blocks():
+    import time
+    from tryon.engine import SEG_MODEL, Scene
+    if not SEG_MODEL.exists():
+        pytest.skip("segmentation model not downloaded")
+    eng = TryOnEngine(live=True)
+    frame = np.full((240, 320, 3), 120, np.uint8)
+    t0 = time.perf_counter()
+    first = eng._category(Scene(frame, 0.0))
+    assert time.perf_counter() - t0 < 0.05                      # returns at once, result not ready yet
+    assert first is None
+    deadline = time.time() + 20
+    mask = None
+    while mask is None and time.time() < deadline:               # the worker thread fills the cache
+        time.sleep(0.1)
+        mask = eng._category(Scene(frame, 0.0))
+    assert mask is not None and mask.shape == frame.shape[:2]
+    assert eng._seg_thread is not None and eng._seg_thread.daemon

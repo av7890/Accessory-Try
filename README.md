@@ -113,7 +113,7 @@ of scikit-learn and numpy classes. `download_models.py` verifies each file's SHA
 |---|---|---|---|
 | `TryOnEngine.analyse` | Runs the needed detectors on a frame and returns a `Scene` | `tryon/engine.py` | `app.py` (photo tab, live `Processor`, advisor) |
 | `TryOnEngine._shoulders` | Finds the two shoulder points with the pose model | `tryon/engine.py` | `analyse` |
-| `TryOnEngine._category` | Gets the per-pixel class mask (hair, skin) from the segmenter | `tryon/engine.py` | `_render` |
+| `TryOnEngine._category` | Gets the per-pixel class mask (hair, skin) from the segmenter; in live mode it returns the newest result finished by a background thread | `tryon/engine.py` | `_render` |
 | `TryOnEngine.render` | Draws one accessory onto a copy of the frame | `tryon/engine.py` | `app.py`, `render_compare` |
 | `TryOnEngine.render_compare` | Draws item A on the left half and item B on the right half | `tryon/engine.py` | `app.py` |
 | `TryOnEngine._prepared` | Applies the shape warp, then relighting, to the sprite | `tryon/engine.py` | `_render` |
@@ -218,6 +218,8 @@ matrix angle → average the two sizes.
 
 **`palm_facing`:** cross product of wrist→index knuckle and wrist→pinky knuckle, compared with the left/right
 label.
+
+**`_category`:** photo mode: shrink the frame to 256 px, run the segmenter, scale the class map back to the frame size. Live mode: hand the newest frame to a background thread if it is idle, and use the latest finished class map (nothing is applied until the first one is ready).
 
 **`OneEuro`:** low smoothing cut-off when the point moves slowly, higher cut-off when it moves fast.
 

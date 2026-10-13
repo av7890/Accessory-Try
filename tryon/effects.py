@@ -55,13 +55,16 @@ class Relighter:
         tint = tint / np.exp(np.log(tint).mean())
         return (gain * tint).astype(np.float32)
 
-    def __call__(self, sprite, light, strength):
-        if strength <= 0:
-            return sprite
-        g = self.gains(sprite, light, strength)
+    @staticmethod
+    def apply(sprite, g):
         out = sprite.copy()
         out[..., :3] = np.clip(sprite[..., :3].astype(np.float32) * g, 0, 255).astype(np.uint8)
         return out
+
+    def __call__(self, sprite, light, strength):
+        if strength <= 0:
+            return sprite
+        return self.apply(sprite, self.gains(sprite, light, strength))
 
 
 # ------------------------------------------------------------------ shape warps
@@ -82,14 +85,9 @@ def wrap_cylinder(sprite: np.ndarray, strength: float) -> np.ndarray:
 
 
 def drape(sprite: np.ndarray) -> np.ndarray:
-    """Squeeze the top of a necklace photo so the chain ends meet at the neck, and fade them out."""
-    h, w = sprite.shape[:2]
+    """Fade the top of a necklace photo so the chain ends melt into the neck instead of ending in a hard edge."""
+    h = sprite.shape[0]
     ys = np.arange(h, dtype=np.float32) / max(h - 1, 1)
-    squeeze = 0.5 + 0.5 * np.clip(ys / 0.55, 0, 1) ** 0.8
-    xs = np.arange(w, dtype=np.float32)
-    map_x = (w / 2 + (xs[None, :] - w / 2) / squeeze[:, None]).astype(np.float32)
-    map_y = np.repeat(np.arange(h, dtype=np.float32)[:, None], w, axis=1)
-    out = cv2.remap(sprite, map_x, map_y, cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=0)
-    fade = np.clip(ys / 0.10, 0, 1)[:, None]
-    out[..., 3] = (out[..., 3] * fade).astype(np.uint8)
+    out = sprite.copy()
+    out[..., 3] = (out[..., 3] * np.clip(ys / 0.10, 0, 1)[:, None]).astype(np.uint8)
     return out
